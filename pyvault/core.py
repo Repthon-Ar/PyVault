@@ -6,16 +6,26 @@ class PyVault:
     @staticmethod
     def _shorten(url):
         try:
-            res = requests.get(f"https://is.gd/create.php?format=simple&url={url}")
-            return res.text if res.status_code == 200 else url
+            res = requests.get(f"https://is.gd/create.php?format=simple&url={url}", timeout=5)
+            if res.status_code == 200 and "is.gd" in res.text:
+                return res.text.strip()
         except:
-            return url
+            pass
+            
+        try:
+            res = requests.get(f"https://tinyurl.com/api-create.php?url={url}", timeout=5)
+            if res.status_code == 200 and "tinyurl" in res.text:
+                return res.text.strip()
+        except:
+            pass
+            
+        return url
 
-        @staticmethod
+    @staticmethod
     def upload(file_path, encrypt=False):
         """يرفع الصور والفيديوهات"""
         if not os.path.exists(file_path):
-            return {"ok": False, "error": "الملف غير موجود"}
+            return {"ok": False, "error": "File not found"}
 
         target = file_path
         key = None
@@ -23,6 +33,7 @@ class PyVault:
         if encrypt:
             key = VaultSecurity.generate_key()
             target = VaultSecurity.encrypt_file(file_path, key)
+
         try:
             with open(target, 'rb') as f:
                 files = {
@@ -44,6 +55,6 @@ class PyVault:
                     "raw_url": raw_url,
                     "key": key.decode() if key else None
                 }
-            return {"ok": False, "error": f"فشل الرفع: {response.text}"}
+            return {"ok": False, "error": response.text}
         except Exception as e:
             return {"ok": False, "error": str(e)}
