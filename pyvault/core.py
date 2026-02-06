@@ -11,11 +11,11 @@ class PyVault:
         except:
             return url
 
-    @staticmethod
+        @staticmethod
     def upload(file_path, encrypt=False):
         """يرفع الصور والفيديوهات"""
         if not os.path.exists(file_path):
-            return {"ok": False, "error": "الملف غير موجود في هذا المسار"}
+            return {"ok": False, "error": "الملف غير موجود"}
 
         target = file_path
         key = None
@@ -23,7 +23,6 @@ class PyVault:
         if encrypt:
             key = VaultSecurity.generate_key()
             target = VaultSecurity.encrypt_file(file_path, key)
-          
         try:
             with open(target, 'rb') as f:
                 files = {
@@ -43,8 +42,7 @@ class PyVault:
                     "ok": True,
                     "url": short_url,
                     "raw_url": raw_url,
-                    "key": key.decode() if key else None,
-                    "message": "تـم الـرفـع بنجـاح"
+                    "key": key.decode() if key else None
                 }
             return {"ok": False, "error": f"فشل الرفع: {response.text}"}
         except Exception as e:
