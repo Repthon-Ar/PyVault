@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PyVault-Uploader"
+version = "1.0.0"
+authors = [
+  { name="Repthon-Ar", email="baqirub@gmail.com" },
+]
+description = "A professional, zero-config media uploader for Python and Telethon."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests",
+    "cryptography",
+    "telethon",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Repthon-Ar/PyVault"
+"Bug Tracker" = "https://github.com/Repthon-Ar/PyVault/issues"
