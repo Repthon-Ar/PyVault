@@ -1,60 +1,42 @@
-import requests
 import os
 from .security import VaultSecurity
 
 class PyVault:
     @staticmethod
-    def _shorten(url):
-        try:
-            res = requests.get(f"https://is.gd/create.php?format=simple&url={url}", timeout=5)
-            if res.status_code == 200 and "is.gd" in res.text:
-                return res.text.strip()
-        except:
-            pass
-            
-        try:
-            res = requests.get(f"https://tinyurl.com/api-create.php?url={url}", timeout=5)
-            if res.status_code == 200 and "tinyurl" in res.text:
-                return res.text.strip()
-        except:
-            pass
-            
-        return url
-
-    @staticmethod
-    def upload(file_path, encrypt=False):
-        """يرفع الصور والفيديوهات"""
+    async def upload(client, file_path, storage_id, bot_username=None, encrypt=False):
+        """
+        يرفع الملف ويولد رابطاً دائماً.
+        :param client: Telethon Client
+        :param storage_id: ID القناة أو 'me' للرسائل المحفوظة
+        :param bot_username: يوزر البوت (اختياري)
+        """
         if not os.path.exists(file_path):
             return {"ok": False, "error": "File not found"}
 
         target = file_path
         key = None
-
         if encrypt:
             key = VaultSecurity.generate_key()
             target = VaultSecurity.encrypt_file(file_path, key)
 
         try:
-            with open(target, 'rb') as f:
-                files = {
-                    'reqtype': (None, 'fileupload'),
-                    'fileToUpload': (os.path.basename(target), f)
-                }
-                response = requests.post("https://catbox.moe/user/api.php", files=files, timeout=60)
-            
-            if response.status_code == 200 and "https" in response.text:
-                raw_url = response.text.strip()
-                short_url = PyVault._shorten(raw_url)
-                
-                if encrypt and os.path.exists(target):
-                    os.remove(target)
+            msg = await client.send_file(storage_id, target)
+            safe_id = VaultSecurity.encode_id(msg.id)
 
-                return {
-                    "ok": True,
-                    "url": short_url,
-                    "raw_url": raw_url,
-                    "key": key.decode() if key else None
-                }
-            return {"ok": False, "error": response.text}
+            if bot_username:
+                url = f"https://t.me/{bot_username.replace('@', '')}?start=file_{safe_id}"
+            else:
+                chat_id = str(storage_id).replace("-100", "")
+                url = f"https://t.me/c/{chat_id}/{msg.id}" if not str(storage_id).isalpha() else f"https://t.me/{storage_id}/{msg.id}"
+
+            if encrypt and os.path.exists(target):
+                os.remove(target)
+
+            return {
+                "ok": True,
+                "url": url,
+                "file_id": msg.id,
+                "key": key.decode() if key else None
+            }
         except Exception as e:
             return {"ok": False, "error": str(e)}
