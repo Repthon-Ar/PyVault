@@ -1,4 +1,5 @@
 from cryptography.fernet import Fernet
+import base64
 import os
 
 class VaultSecurity:
@@ -9,32 +10,21 @@ class VaultSecurity:
     @staticmethod
     def encrypt_file(path, key):
         f = Fernet(key)
-        try:
-            with open(path, "rb") as file:
-                data = file.read()
-            
-            encrypted = f.encrypt(data)
-            enc_path = path + ".vault"
-            
-            with open(enc_path, "wb") as file:
-                file.write(encrypted)
-            return enc_path
-        except Exception as e:
-            print(f"Encryption Error: {e}")
-            return path
+        with open(path, "rb") as file:
+            data = file.read()
+        encrypted = f.encrypt(data)
+        enc_path = path + ".vault"
+        with open(enc_path, "wb") as file:
+            file.write(encrypted)
+        return enc_path
 
     @staticmethod
-    def decrypt_file(enc_path, key, output_path=None):
-        f = Fernet(key)
+    def encode_id(file_id):
+        return base64.urlsafe_b64encode(str(file_id).encode()).decode().strip("=")
+
+    @staticmethod
+    def decode_id(encoded_id):
         try:
-            with open(enc_path, "rb") as file:
-                encrypted_data = file.read()
-            decrypted = f.decrypt(encrypted_data)
-            if not output_path:
-                output_path = enc_path.replace(".vault", "")
-            with open(output_path, "wb") as file:
-                file.write(decrypted)
-            return output_path
-        except Exception as e:
-            print(f"Decryption Error: {e}")
-            return None
+            padding = '=' * (4 - len(encoded_id) % 4)
+            return int(base64.urlsafe_b64decode(encoded_id + padding).decode())
+        except: return None
